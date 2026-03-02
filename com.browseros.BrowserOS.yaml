@@ -1,0 +1,159 @@
+app-id: com.browseros.BrowserOS
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+base: org.chromium.Chromium.BaseApp
+base-version: '25.08'
+command: browseros
+separate-locales: false
+build-options:
+  no-debuginfo: true
+
+finish-args:
+  - --require-version=1.8.2
+  # Display
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  # Audio
+  - --socket=pulseaudio
+  # Network
+  - --share=network
+  # Devices (webcam, USB, GPU, etc.)
+  - --device=all
+  # Printing
+  - --socket=cups
+  # FIDO2 / smartcard
+  - --socket=pcsc
+  # Bluetooth (FIDO2 CTAP hybrid transport)
+  - --allow=bluetooth
+  - --system-talk-name=org.bluez
+  # PipeWire (screen sharing, audio)
+  - --filesystem=xdg-run/pipewire-0
+  # System services
+  - --system-talk-name=org.freedesktop.Avahi
+  - --system-talk-name=org.freedesktop.UPower
+  # Desktop integration
+  - --talk-name=com.canonical.AppMenu.Registrar
+  - --talk-name=org.freedesktop.FileManager1
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.ScreenSaver
+  - --talk-name=org.freedesktop.secrets
+  - --talk-name=org.kde.kwalletd5
+  - --talk-name=org.kde.kwalletd6
+  - --talk-name=org.gnome.SessionManager
+  - --talk-name=org.gnome.ScreenSaver
+  - --talk-name=org.gnome.Mutter.IdleMonitor.*
+  - --talk-name=org.cinnamon.ScreenSaver
+  - --talk-name=org.mate.ScreenSaver
+  - --talk-name=org.xfce.ScreenSaver
+  # Media player (MPRIS)
+  - --own-name=org.mpris.MediaPlayer2.browseros.*
+  # Kerberos
+  - --filesystem=/run/.heim_org.h5l.kcm-socket
+  # File access
+  - --filesystem=host-etc
+  - --filesystem=home/.local/share/applications:create
+  - --filesystem=home/.local/share/icons:create
+  - --filesystem=xdg-desktop
+  - --filesystem=xdg-download
+  - --filesystem=/tmp
+  # Certificate storage
+  - --persist=.pki
+  # GNOME proxy / dconf
+  - --filesystem=xdg-run/dconf
+  - --filesystem=~/.config/dconf:ro
+  - --talk-name=ca.desrt.dconf
+  - --env=DCONF_USER_CONFIG_DIR=.config/dconf
+  - --env=GIO_EXTRA_MODULES=/app/lib/gio/modules
+  - --env=GSETTINGS_BACKEND=dconf
+  # KDE proxy
+  - --filesystem=~/.config/kioslaverc
+
+modules:
+  - name: dconf
+    buildsystem: meson
+    config-opts:
+      - -Dbash_completion=false
+      - -Dman=false
+      - -Dvapi=false
+    cleanup:
+      - /etc
+      - /include
+      - ca.desrt.dconf.service
+      - dconf.service
+      - dconf-service
+      - '*.pc'
+    sources:
+      - type: archive
+        url: https://download.gnome.org/sources/dconf/0.49/dconf-0.49.0.tar.xz
+        sha256: 16a47e49a58156dbb96578e1708325299e4c19eea9be128d5bd12fd0963d6c36
+        x-checker-data:
+          type: gnome
+          name: dconf
+          stable-only: true
+      - type: patch
+        path: dconf-override.patch
+
+  - name: zypak
+    sources:
+      - type: git
+        url: https://github.com/refi64/zypak
+        tag: v2025.09
+        commit: 693a71c5ffa80ec9c9ce2ae03b1ccc493c698e53
+        x-checker-data:
+          type: git
+          tag-pattern: ^v([\d.]+)$
+
+  - name: browseros
+    buildsystem: simple
+    build-commands:
+      # Extract the DEB package
+      - mkdir -p /app/browseros
+      - bsdtar xf browseros.deb
+      - bsdtar -C /app/browseros --strip-components 4 -xf data.tar.zst
+        ./usr/lib/browseros
+      # Extract desktop file into the build working directory
+      - bsdtar --strip-components 4 -xf data.tar.zst
+        ./usr/share/applications/browseros.desktop
+      # Install desktop file with Flatpak app ID
+      - |
+        sed -e 's,Exec=/usr/bin/browseros,Exec=browseros,' \
+            -e 's,^Icon=browseros,Icon=com.browseros.BrowserOS,' \
+            browseros.desktop \
+            > com.browseros.BrowserOS.desktop
+      - install -Dm 644 com.browseros.BrowserOS.desktop
+        /app/share/applications/com.browseros.BrowserOS.desktop
+      # Install pre-resized 256x256 icon (DEB ships a 2133x2133 PNG which
+      # exceeds Flatpak's 512x512 validation limit)
+      - install -Dm 644 com.browseros.BrowserOS.png
+        /app/share/icons/hicolor/256x256/apps/com.browseros.BrowserOS.png
+      # Install stub sandbox so cobalt can locate it and fall back to zypak mode
+      - install -Dm 755 stub_sandbox.sh /app/browseros/chrome-sandbox
+      # Install launcher script
+      - install -Dm 755 browseros.sh /app/bin/browseros
+      # Install cobalt configuration
+      - install -Dm 644 -t /app/etc cobalt.ini
+      # Install metainfo
+      - install -Dm 644 -t /app/share/metainfo
+        com.browseros.BrowserOS.metainfo.xml
+    sources:
+      - type: file
+        url: https://cdn.browseros.com/download/BrowserOS.deb
+        sha256: 25dd2f85abb45f1d2f4bca988ef4eba799b85f1ba64095c893d0bc66a9af72a9
+        dest-filename: browseros.deb
+        only-arches: [x86_64]
+        # x-checker-data:
+        #   type: rotating-url
+        #   url: https://cdn.browseros.com/download/BrowserOS.deb
+        #   pattern: ...
+      - type: file
+        path: cobalt.ini
+      - type: file
+        path: com.browseros.BrowserOS.metainfo.xml
+      - type: file
+        path: browseros.sh
+      - type: file
+        path: stub_sandbox.sh
+      - type: file
+        path: com.browseros.BrowserOS.png
