@@ -29,25 +29,41 @@ https://pub-80f8a01e6e8b4239ae53a7652ef85877.r2.dev/resources/Demo2.mp4
 
 ### Prerequisites
 
-Make sure you have [Flatpak](https://flatpak.org/setup/) and [flatpak-builder](https://docs.flatpak.org/en/latest/flatpak-builder.html) installed, along with the required runtime:
+Make sure you have [Flatpak](https://flatpak.org/setup/) installed, along with the required runtimes:
 
 ```sh
-flatpak install flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
+flatpak install flathub org.freedesktop.Platform//25.08
 flatpak install flathub org.chromium.Chromium.BaseApp//25.08
 ```
 
-### Build and install
+### Install from binary (recommended)
+
+Download the latest `BrowserOS.flatpak` from the [Releases page](https://github.com/DenysMb/BrowserOS-Flatpak/releases) and install it:
 
 ```sh
-git clone https://github.com/DenysMb/BrowserOS-Flatpak.git
-cd BrowserOS-Flatpak
-flatpak-builder --user --install --force-clean build-dir com.browseros.BrowserOS.yaml
+flatpak install BrowserOS.flatpak
 ```
 
 ### Run
 
 ```sh
 flatpak run com.browseros.BrowserOS
+```
+
+---
+
+### Build from source
+
+If you prefer to build it yourself, you will also need [flatpak-builder](https://docs.flatpak.org/en/latest/flatpak-builder.html) and the SDK:
+
+```sh
+flatpak install flathub org.freedesktop.Sdk//25.08
+```
+
+```sh
+git clone https://github.com/DenysMb/BrowserOS-Flatpak.git
+cd BrowserOS-Flatpak
+flatpak-builder --user --install --force-clean build-dir com.browseros.BrowserOS.yaml
 ```
 
 ---
