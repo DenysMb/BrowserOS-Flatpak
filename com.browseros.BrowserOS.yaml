@@ -1,9 +1,9 @@
 app-id: com.browseros.BrowserOS
 runtime: org.freedesktop.Platform
-runtime-version: '25.08'
+runtime-version: "25.08"
 sdk: org.freedesktop.Sdk
 base: org.chromium.Chromium.BaseApp
-base-version: '25.08'
+base-version: "25.08"
 command: browseros
 separate-locales: false
 build-options:
@@ -53,8 +53,8 @@ finish-args:
   - --filesystem=/run/.heim_org.h5l.kcm-socket
   # File access
   - --filesystem=host-etc
-  - --filesystem=home/.local/share/applications:create
-  - --filesystem=home/.local/share/icons:create
+  - --filesystem=home/.local/share/applications:create # To install a PWA application
+  - --filesystem=home/.local/share/icons:create # To install a PWA application
   - --filesystem=xdg-desktop
   - --filesystem=xdg-download
   - --filesystem=/tmp
@@ -83,7 +83,7 @@ modules:
       - ca.desrt.dconf.service
       - dconf.service
       - dconf-service
-      - '*.pc'
+      - "*.pc"
     sources:
       - type: archive
         url: https://download.gnome.org/sources/dconf/0.49/dconf-0.49.0.tar.xz
