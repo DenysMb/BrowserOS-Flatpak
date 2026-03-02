@@ -53,8 +53,8 @@ finish-args:
   - --filesystem=/run/.heim_org.h5l.kcm-socket
   # File access
   - --filesystem=host-etc
-  - --filesystem=home/.local/share/applications:create # To install a PWA application
-  - --filesystem=home/.local/share/icons:create # To install a PWA application
+  - --filesystem=home/.local/share/applications # To install a PWA application
+  - --filesystem=home/.local/share/icons # To install a PWA application
   - --filesystem=xdg-desktop
   - --filesystem=xdg-download
   - --filesystem=/tmp
