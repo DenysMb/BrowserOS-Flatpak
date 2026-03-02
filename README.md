@@ -23,7 +23,7 @@
 
 ## Demo
 
-https://pub-80f8a01e6e8b4239ae53a7652ef85877.r2.dev/resources/Demo2.mp4
+https://github.com/user-attachments/assets/717cd7ef-75ee-4eeb-8a20-2e58605e2c3a
 
 ## Installation
 
