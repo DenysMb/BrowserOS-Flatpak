@@ -139,14 +139,10 @@ modules:
         com.browseros.BrowserOS.metainfo.xml
     sources:
       - type: file
-        url: https://cdn.browseros.com/download/BrowserOS.deb
-        sha256: 25dd2f85abb45f1d2f4bca988ef4eba799b85f1ba64095c893d0bc66a9af72a9
+        url: https://github.com/browseros-ai/BrowserOS/releases/download/v0.40.1/BrowserOS_v0.40.1_amd64.deb
+        sha256: d3296acc1bf33eeca926a7bb772e4698cb3190281979e73401bf77af4ba961fc
         dest-filename: browseros.deb
         only-arches: [x86_64]
-        # x-checker-data:
-        #   type: rotating-url
-        #   url: https://cdn.browseros.com/download/BrowserOS.deb
-        #   pattern: ...
       - type: file
         path: cobalt.ini
       - type: file

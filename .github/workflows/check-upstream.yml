@@ -31,8 +31,8 @@ jobs:
             exit 0
           fi
 
-          # Get current sha256 from our manifest
-          CURRENT_SHA=$(grep -A2 'dest-filename: browseros.deb' com.browseros.BrowserOS.yaml | grep sha256 | awk '{print $2}')
+          # Get current sha256 from our manifest (sha256 appears on the line before dest-filename)
+          CURRENT_SHA=$(grep -B1 'dest-filename: browseros.deb' com.browseros.BrowserOS.yaml | grep sha256 | awk '{print $2}')
 
           # Download .deb and compute sha256
           echo "Downloading $DEB_URL ..."
