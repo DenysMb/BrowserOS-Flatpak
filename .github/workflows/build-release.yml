@@ -28,13 +28,13 @@ jobs:
         id: version
         run: |
           URL=$(grep 'url:.*\.deb' com.browseros.BrowserOS.yaml | awk '{print $2}')
-          VERSION=$(echo "$URL" | grep -oP 'v[\d.]+')
+          VERSION=$(echo "$URL" | sed 's|.*/\(v[0-9][0-9.]*\)/.*|\1|')
 
-          if [ -z "$VERSION" ]; then
+          if [ -z "$VERSION" ] || [ "$VERSION" = "$URL" ]; then
             VERSION="unknown"
           fi
 
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          printf 'version=%s\n' "$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
