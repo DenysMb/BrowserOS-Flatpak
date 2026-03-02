@@ -1,0 +1,62 @@
+name: Check upstream BrowserOS release
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # every 6 hours
+  workflow_dispatch: # manual trigger
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for new upstream release
+        run: |
+          set -euo pipefail
+
+          # Get latest release info from upstream
+          RELEASE=$(curl -s https://api.github.com/repos/browseros-ai/BrowserOS/releases/latest)
+          LATEST_TAG=$(echo "$RELEASE" | jq -r '.tag_name')
+          LATEST_VERSION="${LATEST_TAG#v}"
+
+          # Get .deb download URL
+          DEB_URL=$(echo "$RELEASE" | jq -r '.assets[] | select(.name | endswith("_amd64.deb")) | .browser_download_url')
+
+          if [ -z "$DEB_URL" ] || [ "$DEB_URL" = "null" ]; then
+            echo "No .deb asset found in upstream release $LATEST_TAG. Skipping."
+            exit 0
+          fi
+
+          # Get current sha256 from our manifest
+          CURRENT_SHA=$(grep -A2 'dest-filename: browseros.deb' com.browseros.BrowserOS.yaml | grep sha256 | awk '{print $2}')
+
+          # Download .deb and compute sha256
+          echo "Downloading $DEB_URL ..."
+          curl -sL -o /tmp/browseros.deb "$DEB_URL"
+          NEW_SHA=$(sha256sum /tmp/browseros.deb | awk '{print $1}')
+
+          echo "Upstream version: $LATEST_VERSION"
+          echo "Current SHA256:   $CURRENT_SHA"
+          echo "New SHA256:       $NEW_SHA"
+
+          if [ "$CURRENT_SHA" = "$NEW_SHA" ]; then
+            echo "Already up to date."
+            exit 0
+          fi
+
+          # Update the manifest: replace URL and sha256
+          sed -i "s|url: https://.*\.deb|url: $DEB_URL|" com.browseros.BrowserOS.yaml
+          sed -i "s|sha256: $CURRENT_SHA|sha256: $NEW_SHA|" com.browseros.BrowserOS.yaml
+
+          echo "Manifest updated to BrowserOS $LATEST_VERSION"
+
+          # Commit and push
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add com.browseros.BrowserOS.yaml
+          git commit -m "Chore: Update BrowserOS to v$LATEST_VERSION"
+          git push

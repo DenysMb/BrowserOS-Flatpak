@@ -1,0 +1,54 @@
+name: Build and release Flatpak
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "com.browseros.BrowserOS.yaml"
+  workflow_dispatch: # manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
+      options: --privileged
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Flatpak
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: BrowserOS.flatpak
+          manifest-path: com.browseros.BrowserOS.yaml
+          cache-key: flatpak-builder-${{ github.sha }}
+
+      - name: Extract version from manifest
+        id: version
+        run: |
+          URL=$(grep 'url:.*\.deb' com.browseros.BrowserOS.yaml | awk '{print $2}')
+          VERSION=$(echo "$URL" | grep -oP 'v[\d.]+')
+
+          if [ -z "$VERSION" ]; then
+            VERSION="unknown"
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: "BrowserOS Flatpak - ${{ steps.version.outputs.version }}"
+          files: BrowserOS.flatpak
+          make_latest: true
+          body: |
+            Flatpak build of BrowserOS ${{ steps.version.outputs.version }}.
+
+            **Install:**
+            ```sh
+            flatpak install BrowserOS.flatpak
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
