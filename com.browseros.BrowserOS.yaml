@@ -139,8 +139,8 @@ modules:
         com.browseros.BrowserOS.metainfo.xml
     sources:
       - type: file
-        url: https://github.com/browseros-ai/BrowserOS/releases/download/v0.40.1/BrowserOS_v0.40.1_amd64.deb
-        sha256: d3296acc1bf33eeca926a7bb772e4698cb3190281979e73401bf77af4ba961fc
+        url: https://github.com/browseros-ai/BrowserOS/releases/download/v0.41.0/BrowserOS_v0.41.0_amd64.deb
+        sha256: 0ea0d41a5cece1cc4d5efe60bf34dbaac482a1699dcb80e62b497f2a601d28dd
         dest-filename: browseros.deb
         only-arches: [x86_64]
       - type: file
