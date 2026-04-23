@@ -23,7 +23,7 @@ jobs:
           # Filter to only browser releases by excluding tags that contain a product prefix before the version.
 
           RELEASE=$(curl -s "https://api.github.com/repos/browseros-ai/BrowserOS/releases?per_page=20" \
-            | jq -d -r '[.[] | select(.tag_name | test("^v\\d"))] | sort_by(.published_at) | last')
+            | jq '[.[] | select(.tag_name | test("^v\\d"))] | sort_by(.published_at) | last')
           LATEST_TAG=$(echo "$RELEASE" | jq -r '.tag_name')
           LATEST_VERSION="${LATEST_TAG#v}"
 
