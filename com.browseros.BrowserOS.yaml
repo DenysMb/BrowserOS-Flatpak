@@ -140,7 +140,7 @@ modules:
     sources:
       - type: file
         url: https://github.com/browseros-ai/BrowserOS/releases/download/v0.46.0/BrowserOS_v0.46.0_amd64.deb
-        sha256: 606c8b2031a222f51524c6326ffd59be9368ee9499fcc59a49bf7e0336acd4f8
+        sha256: 3c1fee9ec80f37c671e3415f07b1f03824ce9568e01fd5e1b5ae666b876cf6db
         dest-filename: browseros.deb
         only-arches: [x86_64]
       - type: file
