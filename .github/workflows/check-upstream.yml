@@ -15,25 +15,48 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check for new upstream release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          # Browser releases use plain v* tags (e.g. v0.44.0.1).
-          # Other products use prefixed tags like browseros-server-v*, agent-extension-v*, browseros-cli-v*.
-          # Filter to only browser releases by excluding tags that contain a product prefix before the version.
+          # Browser releases use plain v* tags (e.g. v0.47.18) and ship a BrowserOS_*_amd64.deb asset.
+          # The repo also releases other products (BrowserClaw, claw-server, ext-agent, ...) that
+          # dominate the recent releases list, so we paginate until we find a browser .deb release.
 
-          RELEASE=$(curl -s "https://api.github.com/repos/browseros-ai/BrowserOS/releases?per_page=20" \
-            | jq '[.[] | select(.tag_name | test("^v\\d"))] | sort_by(.published_at) | last')
+          RELEASE=""
+          for page in 1 2 3 4 5; do
+            RESPONSE=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/browseros-ai/BrowserOS/releases?per_page=100&page=$page")
+
+            if [ "$(echo "$RESPONSE" | jq -r 'type')" != "array" ]; then
+              echo "Unexpected GitHub API response. Skipping."
+              exit 0
+            fi
+
+            [ "$(echo "$RESPONSE" | jq 'length')" = "0" ] && break
+
+            MATCH=$(echo "$RESPONSE" | jq '[.[]
+              | select(.tag_name | test("^v[0-9]"))
+              | select(any(.assets[]; .name | startswith("BrowserOS_") and endswith("_amd64.deb")))
+              ] | sort_by(.published_at) | last')
+
+            if [ "$MATCH" != "null" ]; then
+              RELEASE="$MATCH"
+              break
+            fi
+          done
+
+          if [ -z "$RELEASE" ]; then
+            echo "No upstream browser release with a .deb asset found. Nothing to do."
+            exit 0
+          fi
+
           LATEST_TAG=$(echo "$RELEASE" | jq -r '.tag_name')
           LATEST_VERSION="${LATEST_TAG#v}"
 
           # Get .deb download URL
-          DEB_URL=$(echo "$RELEASE" | jq -r '.assets[] | select(.name | endswith("_amd64.deb")) | .browser_download_url')
-
-          if [ -z "$DEB_URL" ] || [ "$DEB_URL" = "null" ]; then
-            echo "No .deb asset found in upstream release $LATEST_TAG. Skipping."
-            exit 0
-          fi
+          DEB_URL=$(echo "$RELEASE" | jq -r '[.assets[] | select(.name | startswith("BrowserOS_") and endswith("_amd64.deb"))][0].browser_download_url')
 
           # Get current sha256 from our manifest (sha256 appears on the line before dest-filename)
           CURRENT_SHA=$(grep -B1 'dest-filename: browseros.deb' com.browseros.BrowserOS.yaml | grep sha256 | awk '{print $2}')
